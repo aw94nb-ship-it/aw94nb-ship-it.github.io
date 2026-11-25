@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+import { ROLE, PREVIOUSLY } from '../data/site';
+import { url } from '../lib/content';
+---
+<Base title="About">
+  <h1>About</h1>
+  <p>I'm Annie Wang. {ROLE}. {PREVIOUSLY}.</p>
+  <p>
+    This site is where I think in public. The essays are the point; the
+    <a href={url('portfolios')}>portfolios</a> group them, together with independent personal
+    projects, around six areas I keep learning in.
+  </p>
+  <p class="meta">
+    Everything here is my own work and my own views, written in a personal capacity. Nothing on
+    this site describes or represents any employer, past or present.
+  </p>
+</Base>

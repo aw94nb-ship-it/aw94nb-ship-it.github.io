@@ -1,0 +1,10 @@
+---
+import Base from '../../layouts/Base.astro';
+import EssayList from '../../components/EssayList.astro';
+import { getEssays } from '../../lib/content';
+const essays = await getEssays();
+---
+<Base title="Essays">
+  <h1>Essays</h1>
+  <EssayList essays={essays} />
+</Base>

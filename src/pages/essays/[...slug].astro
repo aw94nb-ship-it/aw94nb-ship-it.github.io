@@ -1,0 +1,27 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { getEssays, url, formatDate } from '../../lib/content';
+import { portfolioBySlug } from '../../data/portfolios';
+
+export async function getStaticPaths() {
+  const essays = await getEssays();
+  return essays.map((essay) => ({ params: { slug: essay.id }, props: { essay } }));
+}
+const { essay } = Astro.props;
+const { Content } = await render(essay);
+const tags = essay.data.portfolios.map((s) => portfolioBySlug(s)!).filter(Boolean);
+---
+<Base title={essay.data.title} description={essay.data.description}>
+  <article class="prose">
+    <h1>{essay.data.title}</h1>
+    <div class="meta">
+      <time datetime={essay.data.date.toISOString()}>{formatDate(essay.data.date)}</time>
+      {essay.data.updated && <> · updated {formatDate(essay.data.updated)}</>}
+      {tags.length > 0 && (
+        <span class="tags"> · {tags.map((p) => <a href={url(`portfolios/${p.slug}`)}>{p.title}</a>)}</span>
+      )}
+    </div>
+    <Content />
+  </article>
+</Base>

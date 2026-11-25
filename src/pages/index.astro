@@ -1,0 +1,28 @@
+---
+import Base from '../layouts/Base.astro';
+import EssayList from '../components/EssayList.astro';
+import { ROLE, PREVIOUSLY } from '../data/site';
+import { PORTFOLIOS } from '../data/portfolios';
+import { getEssays, url } from '../lib/content';
+const essays = (await getEssays()).slice(0, 10);
+---
+<Base>
+  <p class="lede">
+    I write about machine learning, robotics, agents and markets. {ROLE}. {PREVIOUSLY}.
+  </p>
+  <p class="meta">Everything here is independent personal work and my own views.</p>
+
+  <h2>Essays</h2>
+  <EssayList essays={essays} />
+  {essays.length >= 10 && <p class="meta"><a href={url('essays')}>All essays →</a></p>}
+
+  <h2>Portfolios</h2>
+  <ul class="list">
+    {PORTFOLIOS.map((p) => (
+      <li>
+        <a class="title" href={url(`portfolios/${p.slug}`)}>{p.title}</a>
+        <p>{p.thesis}</p>
+      </li>
+    ))}
+  </ul>
+</Base>
