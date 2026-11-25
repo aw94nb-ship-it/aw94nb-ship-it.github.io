@@ -68,6 +68,48 @@ LLMs are now also trained on synthetic data, but robots need simulation for some
 - Chain-of-thought (writing out reasoning before acting) helps hard tasks but costs time.
 - Galaxea **G0.5**: on about 90% of tasks, skipping reasoning gives the same success at 2x speed. A 5-stage air-fryer task went from 1/5 to 3/5 with reasoning. So reason only when the task needs it.
 
+### 1.5 The model landscape (as of Nov 2026)
+
+**Announced, downloadable and usable are three different things.** Most frontier robot models are announced with demos, offered to partners or a waitlist, and not released as weights.
+
+| Company | Model | What it is | Access |
+| --- | --- | --- | --- |
+| Physical Intelligence | [π0.7](https://arxiv.org/abs/2604.15483) (Apr 2026) | Generalist VLA that combines learned skills and follows guidance | Paper; PI also runs an API beta |
+| Google DeepMind | [Gemini Robotics 2.5, ER 2, On-Device 2](https://deepmind.google/models/gemini-robotics/) | Split into robot action, embodied reasoning and on-robot execution | 2.5 to partners; ER 2 preview in AI Studio; On-Device 2 for trusted testers |
+| NVIDIA | [GR00T 2](https://research.nvidia.com/labs/gear/gr00t-2) | Predicts future video and robot actions together | Code due December 2026 |
+| NVIDIA | GR00T N1.7 | Earlier open humanoid model | Downloadable; Apache-2.0 code, NVIDIA Open Model License weights |
+| Generalist AI | [GEN-1.5](https://generalistai.com/blog/gen-1.5) (Aug 2026) | Learns new tasks from small demo sets | Waitlist |
+| Dyna Robotics | [Dyna-2 / Dyna-2.1](https://www.dyna.co/dyna-2.1) | Dyna-2 is a world action model; Dyna-2.1 is the agent built on it | Commercial |
+| Genesis AI | [GENE-26.5](https://www.therobotreport.com/genesis-ai-introduces-gene-foundation-model-more-dexterous-manipulation/) (May 2026) | Trained on glove hand data, egocentric and internet video, and sim | Not released as weights |
+| Skild AI | [Skild Brain](https://www.skild.ai/) | "Omni-bodied": one brain for many robot bodies | Commercial |
+| Figure | [Helix 2.5](https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization) (Sep 2026) | Co-designed with Figure's humanoid | Runs on Figure robots |
+| Galaxea AI | [G0.5](https://github.com/OpenGalaxea/GalaxeaVLA) (Jun 2026) | Reasoning and action tokens in one stream (see 1.4) | Weights out, non-commercial licence |
+
+Tesla's Optimus is a humanoid program, not a standalone model you can compare.
+
+### 1.6 Open starting points
+
+**These play the role BERT and GPT-2 played for language: common bases anyone can build on.** Check the model licence separately from the code licence; they often differ.
+
+| Starting point | What it is | Licence |
+| --- | --- | --- |
+| [openpi](https://github.com/Physical-Intelligence/openpi) | Training and inference code with π0, π0-FAST and π0.5 checkpoints | Apache-2.0 |
+| [AIRoA-0](https://huggingface.co/airoa-org/AIRoA-0) (Nov 2026) | 3.36B VLA trained on handheld-gripper demos | Code Apache-2.0; weights under Gemma terms; dataset listed as coming soon |
+| [SmolVLA / LeRobot](https://huggingface.co/lerobot/smolvla_base) | ~450M VLA plus Hugging Face's robot learning framework | Apache-2.0 |
+| [MolmoAct2](https://github.com/allenai/molmoact2) | AI2's robot action model with training and inference code | Apache-2.0 |
+| [OpenVLA](https://github.com/openvla/openvla) | Pretrained VLA | Code MIT; models under the Llama licence |
+| [Octo](https://github.com/octo-models/octo) | Generalist policy with pretrained checkpoints | MIT |
+| [Diffusion Policy](https://github.com/real-stanford/diffusion_policy) | A method for generating actions with diffusion, not a pretrained brain | MIT |
+| [ACT / ALOHA](https://github.com/tonyzhaozh/act) | Action chunking for imitation learning, plus a two-arm data collection setup | MIT |
+
+### 1.7 How actions are represented
+
+**What a model outputs decides how far it travels between robots.**
+
+- **Joint commands vs. gripper poses.** Joint angles are specific to one arm. A target pose for the gripper (where it should be and how it should face) carries over to other arms better, but each robot still needs its own layer to turn that pose into motor commands it can actually reach.
+- **Action chunks.** Predicting several future actions at once means fewer calls to the big model. The open design question is how much of a chunk to run before looking again: run too much and the robot misses changes; too little and it is slow. Streaming tokenizers like ActionCodec2 (1.2) are one answer.
+- **Latent actions.** A model can learn compact codes for "what changed between two frames" from plain video, with no motor labels. That unlocks human and internet video as training data, but mapping those codes onto a real robot body is still separate work.
+
 ## 2. Data: the fuel
 
 **The bottleneck is shifting from how much robot data you have to what kind: recovery, contact-rich and real deployment data.**
@@ -104,6 +146,8 @@ Implied by Tedrake's talk: field interventions and corrections > field teleop > 
 - **Exoskeletons:** UME (James Xu, Stanford) is a low-cost arm exoskeleton with real-time force feedback; it retargets to OpenArm, Franka and xArm.
 - **Human / egocentric video:** cheap and huge, but has no robot actions; it must be mapped onto robot hands. NVIDIA's open **Human-1M** dataset (scale unit to confirm), EgoHTR for legged walking data (Jonas Frey).
 - **Touch data:** FingerEye fingertip sensors output contact-depth maps: 65.9% vs. 24.1% average success in sim against wrist camera + regular touch.
+
+**Data is already a supply chain.** Maxinsights, which pays people to record everyday work with cameras, [says](https://theaiinsider.tech/2026/10/23/maxinsights-raises-30m-seed-round-and-launches-physical-ai-data-tools/) all 200,000 hours of egocentric data behind Genesis AI's GENE-26.5 came from it, and that it is the largest data provider for Dyna-2. Both are the supplier's own claims.
 
 ### 2.4 Mid-training data is commoditizing
 
@@ -176,6 +220,8 @@ With the clock running, policies that call the model every step collapse. Orches
 - His ask: layers should pass **intent down and feedback up**, and each should close its own loop. Today almost nothing flows back up.
 
 **My insight: System 2 in the cloud, Systems 1 and 0 on the edge.** System 2 only answers every few seconds, so a 50 to 200 ms network round trip doesn't matter. The fast layers can't wait for the internet and must run on the robot (Jetson-class compute). If the connection drops, the robot still moves safely. The cloud-to-edge hand-off is the slowest seam, so it needs the most testing.
+
+Two real reference points: Boston Dynamics' Atlas behavior model controls the full robot [at 30 Hz](https://bostondynamics.com/blog/large-behavior-models-atlas-find-new-footing/) (System 1), and the Franka FR3 Duo exposes [1 kHz low-level control](https://franka.de/fr3-duo) (System 0).
 
 ### 4.3 One whole-body model, not a skill library (Boston Dynamics)
 
@@ -264,13 +310,28 @@ Boring and labor-intensive, but with expensive failures. High volume gives clear
 - Walden ships a new model **every Thursday**: work all week, log interventions, retrain, release, measure again.
 - Metric: **mean time between interventions**, from about 5 s in week 1 to about 80 s in week 6 (roughly 15x on a log scale). A full shift is 28,800 s, so there is still a long way to go.
 
+**The research line behind learning on the job:**
+
+| Year | Work | Idea |
+| --- | --- | --- |
+| 2011 | DAgger | Get expert labels for the states the learner actually visits |
+| 2019 | HG-DAgger | The human decides when to take over and corrects |
+| 2023 | [Sirius](https://arxiv.org/abs/2211.08416) (RSS) | Use interventions during deployment to keep improving the policy |
+| 2024–25 | [HIL-SERL](https://arxiv.org/abs/2410.21845) | Real-world RL plus human demos and corrections |
+| 2025 | [RECAP / π*0.6](https://arxiv.org/abs/2511.14759) (Physical Intelligence) | Improve a VLA from demos, corrections and its own experience |
+| 2026 | [Learning While Deploying](https://arxiv.org/abs/2605.00416) | Fleet-scale RL: a whole fleet's experience and interventions improve one generalist policy |
+
+The new step is sharing what one deployment learns across tasks and sites, instead of fixing each robot alone.
+
 ### 6.4 Stronger pretraining learns more on the job
 
-| Pretraining | After task adaptation | After 24 h on the job | Remote intervention time |
-| --- | --- | --- | --- |
-| 1k hours | ~30 s | ~38 s | 2.22 h |
-| 10k hours | ~44 s | ~66 s | 1.78 h |
-| 100k hours | ~44 s | ~89 s | 1.36 h |
+| Pretraining | Before adaptation | After task adaptation | After 24 h on the job | Remote intervention time | Autonomous after 24 h |
+| --- | --- | --- | --- | --- | --- |
+| 1k hours | ~10 s | ~27 s | ~28 s | 2.22 h | 67% |
+| 10k hours | ~8 s | ~40 s | ~56 s | 1.78 h | 80% |
+| 100k hours | ~11 s | ~41 s | ~80 s | 1.36 h | ~89% |
+
+Mean time between interventions, from [Walden's LBM 2.0 post](https://www.waldenrobotics.com/news/lbm-2-0-accelerating-learning-in-deployment) (Nov 11, 2026): three 4.7B models, about 6.2 hours of demos per task, seven tasks, three 8-hour shifts each.
 
 - The gap opens **during deployment**, not before: 10k and 100k look the same after adaptation.
 - Stronger models get less intervention data but improve more, and their interventions are different: short nudges on rare edge cases instead of long takeovers. So also track intervention duration and % of time autonomous, not only time between interventions.
@@ -287,6 +348,15 @@ Today one human watches one robot. To scale, the policy detects when it's unsure
 ### 6.7 The next bottleneck is building robots
 
 Walden's AI is no longer the main limit; manufacturing is. Their robots help assemble robots, they design for mass production, and they partner with Toyota.
+
+### 6.8 Safety and security
+
+**A robot's mistakes are physical, so safety can't live only inside the model.**
+
+- **Physical limits.** Caps on force, on the space the robot can reach and on how close it gets to people, plus clear stop conditions. The fastest checks belong in System 0, the controller itself; slower ones belong in uncertainty monitoring and asking for help (6.6).
+- **Misleading inputs.** A doctored image, sticker or reflection can change what a vision model sees and so what it decides. Robot models inherit the adversarial problems of vision models.
+- **Instructions vs. text in view.** A robot that takes language instructions must tell an authorized command from words it merely sees, such as a sign or a label saying "open the door". This is prompt injection with a body.
+- **Proposing vs. permission.** A model suggesting an action and the system allowing it to run should be separate decisions, with the permission check outside the model.
 
 ## 7. Evaluation: measuring what's real
 
@@ -321,6 +391,31 @@ Hang Zhao's one request to researchers: in simulation, report success before a d
 
 Each layer can work alone, yet things break where one passes control to the next: System 2's plan doesn't match what System 1 can do, or System 1's motion doesn't match what System 0 can track. You only find these failures by running the whole stack together, in real time, on real hardware.
 
+### 7.5 Sim tools and benchmarks
+
+| Tool or benchmark | What it is |
+| --- | --- |
+| [SuperDex](https://github.com/facebookresearch/project_superdex) (Meta) | A unified platform for dexterous manipulation research; VR teleop (Quest 3) is on its roadmap |
+| Cosmos (NVIDIA) | An open platform for building world models. Predicting video is not the same as simulating physics |
+| [ToyBlocks](https://allenai.org/blog/toyblocks) (AI2, Nov 2026) | Sim framework with 85,336 long-horizon demonstrations, Apache-2.0 |
+| [DuoBench](https://duobench.github.io/) | Two-arm benchmark on the Franka FR3 Duo: 11 sim tasks, 4 also run on real robots |
+| [RoboColosseum](https://robocolosseum.ai/) | Shared real-robot evaluation across many sites; an open track ranked by pairwise ratings and a fine-tune track (100 demos, 25 attempts) |
+
+Two older routes still frame most of this: **sim-to-real** (train in sim, run on the robot) and **real-to-sim-to-real** (rebuild the real scene in sim, train there, go back).
+
+### 7.6 How to read a success rate
+
+**"90% success" means little on its own.** Before trusting a number, ask:
+
+1. How many attempts? Real-robot trials are expensive, so a handful of runs can swing the result.
+2. Were the objects and scenes familiar or new?
+3. Who reset the scene between attempts, and how?
+4. Did thinking time count, or was the clock paused (7.1)?
+5. What counted as success, and who judged it?
+6. How long did it take? A slow success can still fail the job.
+
+Example: Generalist reported that [GEN-1](https://generalistai.com/blog/gen-1) lifts average success to 99% on tasks where earlier models reached 64%. That holds for those selected tasks under those conditions, not for manipulation in general.
+
 ## 8. Hardware and embodiment
 
 **Embodied AI is a system, not a model: body, hands, sensing and compute all have to work together.** Hardware moves at hardware speed, not software speed.
@@ -354,6 +449,23 @@ At CoRL, Optimus appeared to me to be teleoperated (blamed on "network issues"),
 ### 8.5 Compute on the robot
 
 System 1 and 0 must run on the robot, so on-board compute (Jetson Orin / Thor class) and small, fast VLAs (Chapter 4.5) decide what a robot can actually do in real time. NVIDIA's open stack includes reference hardware alongside its GR00T 2 model.
+
+### 8.6 Sensing beyond cameras
+
+**Cameras miss slip and force, so the best fix is often a new sense, not a smarter camera model.**
+
+- **Vision plus touch at the fingertip:** [FingerEye](https://arxiv.org/abs/2604.20689) puts binocular cameras behind a soft contact surface, so the robot sees while approaching and feels after contact (2.3).
+- **Touch where vision fails:** [DAVATaR](https://davatar-corl26.github.io/) (UT Austin) works across the air-water line, where refraction, reflections and foam fool cameras. It pairs fluid-based touch sensing with training images that mimic those distortions.
+- **Touch doesn't transfer yet:** a model trained on one tactile sensor often fails on another, the way actions fail to transfer between arms.
+- **Muscle signals:** wristbands that read muscle activity can show intended movement and effort, but need interpretation and calibration per person.
+- **Scene representations:** besides images, point clouds and Gaussian splats (many small colored 3D blobs) capture geometry better, at the cost of building and updating them.
+
+### 8.7 Hard objects and body shapes
+
+- **Deformable objects** like cloth, rope and food change shape when touched, so they are harder to track, predict and simulate than rigid ones.
+- **Grippers vs. hands:** two-finger grippers are simple; multi-finger hands add joints, contact points and much harder data collection.
+- **Body shapes:** fixed arms work at one station; arms on wheels move between stations without legs; humanoids target spaces and tools built for people; drones reach places ground robots can't, under tight weight, power and latency limits.
+- **Fleets:** several robots sharing tasks and information need task allocation, delay handling and failure recovery, and some research coordinates them without a central controller (5.6).
 
 ## 9. The field: trends and outlook
 
