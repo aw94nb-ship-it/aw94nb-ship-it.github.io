@@ -1,0 +1,36 @@
+---
+import Base from '../../layouts/Base.astro';
+import EssayList from '../../components/EssayList.astro';
+import { PORTFOLIOS } from '../../data/portfolios';
+import { getEssays, getProjects, formatDate } from '../../lib/content';
+
+export function getStaticPaths() {
+  return PORTFOLIOS.map((p) => ({ params: { slug: p.slug }, props: { portfolio: p } }));
+}
+const { portfolio } = Astro.props;
+const essays = (await getEssays()).filter((e) => e.data.portfolios.includes(portfolio.slug));
+const projects = (await getProjects()).filter((p) => p.data.portfolios.includes(portfolio.slug));
+---
+<Base title={portfolio.title} description={portfolio.thesis}>
+  <p class="label">Portfolio</p>
+  <h1>{portfolio.title}</h1>
+  <p class="thesis">{portfolio.thesis}</p>
+
+  <h2>Essays</h2>
+  <EssayList essays={essays} empty="Essays for this portfolio are on the way." />
+
+  <h2>Projects</h2>
+  {projects.length === 0 ? (
+    <p class="empty">Independent projects for this portfolio are on the way.</p>
+  ) : (
+    <ul class="list">
+      {projects.map((p) => (
+        <li>
+          {p.data.url ? <a class="title" href={p.data.url}>{p.data.title}</a> : <span class="title">{p.data.title}</span>}
+          <div class="meta">{formatDate(p.data.date)} · independent personal work</div>
+          <p>{p.data.summary}</p>
+        </li>
+      ))}
+    </ul>
+  )}
+</Base>

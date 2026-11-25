@@ -1,0 +1,17 @@
+---
+import Base from '../../layouts/Base.astro';
+import { PORTFOLIOS } from '../../data/portfolios';
+import { url } from '../../lib/content';
+---
+<Base title="Portfolios">
+  <h1>Portfolios</h1>
+  <p>Six areas I keep learning in. Each starts with a point of view, then the essays and independent projects behind it.</p>
+  <ul class="list">
+    {PORTFOLIOS.map((p) => (
+      <li>
+        <a class="title" href={url(`portfolios/${p.slug}`)}>{p.title}</a>
+        <p>{p.thesis}</p>
+      </li>
+    ))}
+  </ul>
+</Base>
