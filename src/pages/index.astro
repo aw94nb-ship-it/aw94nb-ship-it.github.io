@@ -1,16 +1,14 @@
 ---
 import Base from '../layouts/Base.astro';
 import EssayList from '../components/EssayList.astro';
-import { ROLE, PREVIOUSLY } from '../data/site';
 import { PORTFOLIOS } from '../data/portfolios';
 import { getEssays, url } from '../lib/content';
 const essays = (await getEssays()).slice(0, 10);
 ---
 <Base>
   <p class="lede">
-    I write about machine learning, robotics, agents and markets. {ROLE}. {PREVIOUSLY}.
+    I build machine learning systems and write about robotics, AI agents and markets.
   </p>
-  <p class="meta">Everything here is independent personal work and my own views.</p>
 
   <h2>Essays</h2>
   <EssayList essays={essays} />
