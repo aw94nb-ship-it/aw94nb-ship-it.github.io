@@ -1,4 +1,4 @@
-// The six learning portfolios. Essays and projects join a portfolio by listing its slug
+// The seven learning portfolios. Essays and projects join a portfolio by listing its slug
 // in their `portfolios` frontmatter, so these pages fill themselves.
 export const PORTFOLIOS = [
   {
@@ -18,6 +18,12 @@ export const PORTFOLIOS = [
     title: 'Applied ML',
     thesis:
       'In production, the model is the easy part. The work is the data, the evaluation, and the discipline to ship the simplest thing that holds up.',
+  },
+  {
+    slug: 'affective-computing',
+    title: 'Affective computing',
+    thesis:
+      'Reading how someone feels is a measurement problem before it is a modelling one. Which feeling, on what time scale, labelled by whom, and whether the words or the voice should decide.',
   },
   {
     slug: 'ab-testing',

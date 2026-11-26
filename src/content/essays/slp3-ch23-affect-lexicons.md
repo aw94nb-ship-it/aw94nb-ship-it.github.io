@@ -2,7 +2,7 @@
 title: 'Reading notes: lexicons for sentiment, affect and connotation'
 description: 'What chapter 23 of Jurafsky and Martin’s Speech and Language Processing teaches about representing feelings in words, building lexicons, and finding the words that separate two kinds of text.'
 date: 2026-11-26
-portfolios: ['applied-ml']
+portfolios: ['affective-computing']
 ---
 
 These are my notes on chapter 23 of Dan Jurafsky and James H. Martin’s
